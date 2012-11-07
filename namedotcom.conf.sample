@@ -1,0 +1,4 @@
+[namedotcomconfig]
+username = web_interface_username
+api_token = api_token,_obtained_by_asking_name.com_support_for_one
+api_auth_url = https://api.name.com/api/login
