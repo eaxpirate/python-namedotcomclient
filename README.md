@@ -28,6 +28,7 @@ TODO
   * Determine the timeout for the session keys and decide on whether or not to -
     cache
   * Add a ''quiet'' flag for scripting
+  * Add some filtering
 
 Installation
 ============
