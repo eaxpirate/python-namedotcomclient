@@ -60,10 +60,11 @@ Usage: ./namedotcom [--username username] [--api_token token] <command>
 --username - the username you use to login to the web interface
 --api_token - the token you were given by support when you asked for it
 <command> - can be any one of the following:
-	listdomains                              - list all of your domains
-	listrecords <domain>                     - list all records in domain
-	createrecord <name>,<domain>,<ip>,<type> - create subdomain for domain
-	deleterecord <domain>,<record id>        - Delete a record
+	--list-domains                              - list all of your domains
+	--list-records <domain>                     - list all records in domain
+	--create-record <name>,<domain>,<ip>,<type> - create subdomain for domain
+	--delete-record <domain>,<record id>        - Delete a record
+
 
 Example Output
 ==============
