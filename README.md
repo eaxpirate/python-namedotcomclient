@@ -21,6 +21,8 @@ ConfigParser
 TODO
 ====
 
+  * Critical: fix getopt/configparser - config file is authoritative but we want
+    options
   * setuptools
   * Create an actual library
   * Error handling and input sanitization
