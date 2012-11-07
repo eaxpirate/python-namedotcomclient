@@ -31,8 +31,7 @@ try:
 	apiToken = config.get("namedotcomconfig","api_token")
 	apiAuthURL = config.get("namedotcomconfig", "api_auth_url")
 except:
-	raise Exception("Unable to read or find your ~/.namecomrc " \
-	    "configuration file.")
+	raise Exception("Unable to read or find ~/.namecomrc configuration file.")
 
 
 def usage():
