@@ -19,20 +19,14 @@ from sys import argv,exit
 import ConfigParser
 
 # (Niko) Isn't there a better way to do this?
-conffile = os.environ['HOME'] + "/.namedotcom.conf"
+try:
+	conffile = os.environ['HOME'] + "/.namedotcom.conf"
+except:
+    raise Exception("Unable to read or find ~/.namecomrc configuration file.")
+	
 base = "https://api.name.com"
 token = ""
 h = httplib2.Http()
-
-try:
-	config = ConfigParser.RawConfigParser()
-	config.readfp(open(conffile))
-	apiUsername = config.get("namedotcomconfig","username")
-	apiToken = config.get("namedotcomconfig","api_token")
-	apiAuthURL = config.get("namedotcomconfig", "api_auth_url")
-except:
-	raise Exception("Unable to read or find ~/.namecomrc configuration file.")
-
 
 def usage():
 	print """
@@ -51,6 +45,12 @@ if len(argv) <= 1:
     usage()
 
 def _authenticate():
+	config = ConfigParser.RawConfigParser()
+	config.readfp(open(conffile))
+	apiUsername = config.get("namedotcomconfig","username")
+	apiToken = config.get("namedotcomconfig","api_token")
+	apiAuthURL = config.get("namedotcomconfig", "api_auth_url")
+
 	authJson = {}
 	authJson["username"] = apiUsername
 	authJson["api_token"] = apiToken
@@ -150,30 +150,35 @@ def deleteRecord(domain, recId):
 def main():
 	try:
 		opts,args = getopt(
-			argv[1:], "hu:a:A:",
+			argv[1:], "h",
+			# argv[1:], "hu:a:A:",
 			[
 				"help",
-				"username=",
-				"api_token=", 
-				"auth_url=",
+				#"username=",
+				#"api_token=", 
+				#"auth_url=",
 				"list-domains", 
 				"list-records=",
 				"create-record=",
 				"delete-record="
 			]
 		)
+
 	except GetoptError as err:
 		print str(err)
 		usage()
+
 	for opt, arg in opts:
 		if opt in ("-h","--help"):
 			usage()
-		elif opt in ("-u","--username"):
-			apiUsername = arg
-		elif opt in ("-a","--api_token"):
-			apiToken = arg
-		elif opt in ("-A", "--auth_url"):
-			apiAuthURL = arg
+		# Niko: removing this functionality for now
+		#       I want to focus on other things in this project
+		#elif opt in ("-u","--username"):
+		#	apiUsername = arg
+		#elif opt in ("-a","--api_token"):
+		#	apiToken = arg
+		#elif opt in ("-A", "--auth_url"):
+		#	apiAuthURL = arg
 		elif opt in ("--list-domains"):
 			listDomains()
 		elif opt in ("--list-records"):
@@ -190,5 +195,3 @@ def main():
 
 if __name__ == "__main__":
 	main()
-
-
