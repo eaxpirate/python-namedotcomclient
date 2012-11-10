@@ -21,8 +21,11 @@ import ConfigParser
 # (Niko) Isn't there a better way to do this?
 try:
 	conffile = os.environ['HOME'] + "/.namedotcom.conf"
+	# do some shit that will verify a readable configuration file
 except:
-    raise Exception("Unable to read or find ~/.namecomrc configuration file.")
+    print "WARN: Unable to read or find ~/.namecomrc configuration file"
+	print "WARN: Attempting to write one"
+	open(conffile, w)
 	
 base = "https://api.name.com"
 token = ""
