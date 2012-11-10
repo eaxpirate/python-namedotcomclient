@@ -58,10 +58,8 @@ Usage
 
     Name.com DNS Manager
     
-    Usage: ./namedotcom [--username username] [--api_token token] <command>
+    Usage: ./namedotcom <command>
     
-    --username - the username you use to login to the web interface
-    --api_token - the token you were given by support when you asked for it
     <command> - can be any one of the following:
     	--list-domains                              - list all of your domains
     	--list-records <domain>                     - list all records in domain

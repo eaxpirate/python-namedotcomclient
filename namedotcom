@@ -31,9 +31,7 @@ h = httplib2.Http()
 def usage():
 	print """
 \033[33mName.com DNS Manager\033[0m\n
-Usage: ./namedotcom [--username username] [--api_token token] <command>\n
---username - the username you use to login to the web interface
---api_token - the token you were given by support when you asked for it
+Usage: ./namedotcom <command>\n
 <command> - can be any one of the following:
 \t--list-domains                              - list all of your domains
 \t--list-records <domain>                     - list all records in domain
