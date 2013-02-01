@@ -23,7 +23,7 @@ try:
 	conffile = os.environ['HOME'] + "/.namedotcom.conf"
 	# do some shit that will verify a readable configuration file
 except:
-    print "WARN: Unable to read or find ~/.namecomrc configuration file"
+	print "WARN: Unable to read or find ~/.namecomrc configuration file"
 	print "WARN: Attempting to write one"
 	open(conffile, w)
 	
