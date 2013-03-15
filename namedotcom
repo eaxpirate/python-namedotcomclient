@@ -62,12 +62,14 @@ def _authenticate():
     r, content = h.request(
         apiAuthURL, 'POST', json.JSONEncoder().encode(authJson),
         headers={'Content-type': 'application/json'})
-    
-    result = json.loads(content)
-    
-    if result["result"]["code"] == 100:
-        token = result["session_token"]
-    return token
+    if r['status'] == "200":
+        result = json.loads(content)
+        if result["result"]["code"] == 100:
+            token = result["session_token"]
+        return token
+    else:
+        print "Could not authenticate. Check your RC"
+        exit(1)
 
 def listRecords(input):
     domainName = _validateInput(input)
@@ -78,27 +80,33 @@ def listRecords(input):
             'Api-Session-Token':  token
             }
     )
-    t = prettytable.PrettyTable(
-        [
-            "Created",
-            "Name",
-            "IP",
-            "TTL",
-            "Record ID",
-            "Type"
-        ]
-    )
-    data = json.loads(content)
-    for row in data["records"]:
-        t.add_row([
-        row["create_date"],
-        row["name"],
-        row["content"],
-        row["ttl"],
-        row["record_id"],
-        row["type"]
-        ])
-    print t
+    if r['status'] == "200":
+        t = prettytable.PrettyTable(
+            [
+                "Created",
+                "Name",
+                "IP",
+                "TTL",
+                "Record ID",
+                "Type"
+            ]
+        )
+        data = json.loads(content)
+        for row in data["records"]:
+            t.add_row([
+            row["create_date"],
+            row["name"],
+            row["content"],
+            row["ttl"],
+            row["record_id"],
+            row["type"]
+            ])
+        print t
+    else:
+        print "The remote API did not return status 200."
+        print "name.com may be experiencing an outage"
+        print "or there is a problem with your domain name"
+        exit(1)
 
 def listDomains():
     out = {}
@@ -109,11 +117,17 @@ def listDomains():
         'Api-Session-Token':  token
         }
     )
-    t = prettytable.PrettyTable(["Domain"])
-    data = json.loads(content)
-    for mkey,sd in data["domains"].iteritems():
-        t.add_row([mkey])
-    print t
+    if r['status'] == "200":
+        t = prettytable.PrettyTable(["Domain"])
+        data = json.loads(content)
+        for mkey,sd in data["domains"].iteritems():
+            t.add_row([mkey])
+        print t
+    else:
+        print "The remote API did not return status 200."
+        print "name.com may be experiencing an outage"
+        exit(1)
+        
 
 def createRecord(hostnameInput, domainInput, ipInput, recTypeInput):
     hostname = _validateInput(hostnameInput)
@@ -134,10 +148,16 @@ def createRecord(hostnameInput, domainInput, ipInput, recTypeInput):
         'Api-Session-Token':  token
         }
     )
-    data = json.loads(content)
-    t = prettytable.PrettyTable(["Result"])
-    t.add_row([data["result"]["message"]])
-    print t
+    if r['status'] == "200":
+        data = json.loads(content)
+        t = prettytable.PrettyTable(["Result"])
+        t.add_row([data["result"]["message"]])
+        print t
+    else:
+        print "The remote API did not return status 200 after your POST."
+        print "name.com may be experiencing an outage"
+        exit(1)
+        
 
 def deleteRecord(domainInput, recIdInput):
     domain = _validateInput(domainInput)
@@ -152,11 +172,15 @@ def deleteRecord(domainInput, recIdInput):
         'Api-Session-Token': token
         }
     )
-    data = json.loads(content)
-    t = prettytable.PrettyTable(["Result"])
-    t.add_row([data["result"]["message"]])
-    print t
-    
+    if r['status'] == "200":
+        data = json.loads(content)
+        t = prettytable.PrettyTable(["Result"])
+        t.add_row([data["result"]["message"]])
+        print t
+    else:
+        print "The remote API did not return status 200 after your POST."
+        print "name.com may be experiencing an outage"
+        exit(1)
 
 def main():
     try:
