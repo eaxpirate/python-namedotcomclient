@@ -152,12 +152,8 @@ def main():
 	try:
 		opts,args = getopt(
 			argv[1:], "h",
-			# argv[1:], "hu:a:A:",
 			[
 				"help",
-				#"username=",
-				#"api_token=", 
-				#"auth_url=",
 				"list-domains", 
 				"list-records=",
 				"create-record=",
@@ -172,14 +168,6 @@ def main():
 	for opt, arg in opts:
 		if opt in ("-h","--help"):
 			usage()
-		# Niko: removing this functionality for now
-		#       I want to focus on other things in this project
-		#elif opt in ("-u","--username"):
-		#	apiUsername = arg
-		#elif opt in ("-a","--api_token"):
-		#	apiToken = arg
-		#elif opt in ("-A", "--auth_url"):
-		#	apiAuthURL = arg
 		elif opt in ("--list-domains"):
 			listDomains()
 		elif opt in ("--list-records"):
