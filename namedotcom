@@ -1,14 +1,8 @@
 #!/usr/bin/env python
 # 
-# Niko Gonzales
-# Niko.Gonzales@rackspace.com
-# 
-# A very simple manager for name.com's hosted DNS product.
-# No classes, no extensive exception handling
-# Just Ghetto python to do 4 things.
-# 
-# Please make it better if you have the need and the time
-# 
+# A simple interface to Name.com's DNS API
+# This is useful if you host your DNS with them.
+#
 
 import json
 import prettytable
@@ -18,10 +12,8 @@ from getopt import getopt,GetoptError
 from sys import argv,exit
 import ConfigParser
 
-# (Niko) Isn't there a better way to do this?
 try:
 	conffile = os.environ['HOME'] + "/.namedotcom.conf"
-	# do some shit that will verify a readable configuration file
 except:
 	print "WARN: Unable to read or find ~/.namecomrc configuration file"
 	print "WARN: Attempting to write one"
