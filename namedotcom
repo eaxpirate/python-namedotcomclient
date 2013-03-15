@@ -11,20 +11,23 @@ import os
 from getopt import getopt,GetoptError
 from sys import argv,exit
 import ConfigParser
+import string
 
 try:
-	conffile = os.environ['HOME'] + "/.namedotcom.conf"
+    conffile = os.environ['HOME'] + "/.namedotcom.conf"
 except:
-	print "WARN: Unable to read or find ~/.namecomrc configuration file"
-	print "WARN: Attempting to write one"
-	open(conffile, w)
-	
+    print "WARN: Unable to read or find ~/.namecomrc configuration file"
+    print "WARN: Attempting to write one"
+    open(conffile, w)
+    
 base = "https://api.name.com"
 token = ""
 h = httplib2.Http()
+allowedChars = set(string.ascii_letters + string.digits + '-' + '.')
+
 
 def usage():
-	print """
+    print """
 \033[33mName.com DNS Manager\033[0m\n
 Usage: ./namedotcom <command>\n
 <command> - can be any one of the following:
@@ -32,147 +35,162 @@ Usage: ./namedotcom <command>\n
 \t--list-records <domain>                     - list all records in domain
 \t--create-record <name>,<domain>,<ip>,<type> - create subdomain for domain
 \t--delete-record <domain>,<record id>        - Delete a record\n\n"""
-	exit(1)
+    exit(1)
 
 if len(argv) <= 1:
     usage()
 
+def _validateInput(str):
+    if set(str) - allowedChars:
+        print """Invalid characters detected.
+        only 0-9,a-zA-Z, '\' and '-' are allowed."""
+        exit(1)
+    else:
+        return(str)
+
 def _authenticate():
-	config = ConfigParser.RawConfigParser()
-	config.readfp(open(conffile))
-	apiUsername = config.get("namedotcomconfig","username")
-	apiToken = config.get("namedotcomconfig","api_token")
-	apiAuthURL = config.get("namedotcomconfig", "api_auth_url")
+    config = ConfigParser.RawConfigParser()
+    config.readfp(open(conffile))
+    apiUsername = config.get("namedotcomconfig","username")
+    apiToken = config.get("namedotcomconfig","api_token")
+    apiAuthURL = config.get("namedotcomconfig", "api_auth_url")
 
-	authJson = {}
-	authJson["username"] = apiUsername
-	authJson["api_token"] = apiToken
+    authJson = {}
+    authJson["username"] = apiUsername
+    authJson["api_token"] = apiToken
 
-	r, content = h.request(
-		apiAuthURL, 'POST', json.JSONEncoder().encode(authJson),
-		headers={'Content-type': 'application/json'})
-	
-	result = json.loads(content)
-	
-	if result["result"]["code"] == 100:
-		token = result["session_token"]
-	return token
+    r, content = h.request(
+        apiAuthURL, 'POST', json.JSONEncoder().encode(authJson),
+        headers={'Content-type': 'application/json'})
+    
+    result = json.loads(content)
+    
+    if result["result"]["code"] == 100:
+        token = result["session_token"]
+    return token
 
-def listRecords(domainName):
-	token = _authenticate()
-	nameListDnsRecords = base+"/api/dns/list/"+domainName
-	r, content = h.request(nameListDnsRecords, 'GET', headers={
-			'Content-type': 'application/json', 
-			'Api-Session-Token':  token
-			}
-	)
-	t = prettytable.PrettyTable(
-		[
-			"Created",
-			"Name",
-			"IP",
-			"TTL",
-			"Record ID",
-			"Type"
-		]
-	)
-	data = json.loads(content)
-	for row in data["records"]:
-		t.add_row([
-		row["create_date"],
-		row["name"],
-		row["content"],
-		row["ttl"],
-		row["record_id"],
-		row["type"]
-		])
-	print t
+def listRecords(input):
+    domainName = _validateInput(input)
+    token = _authenticate()
+    nameListDnsRecords = base+"/api/dns/list/"+domainName
+    r, content = h.request(nameListDnsRecords, 'GET', headers={
+            'Content-type': 'application/json', 
+            'Api-Session-Token':  token
+            }
+    )
+    t = prettytable.PrettyTable(
+        [
+            "Created",
+            "Name",
+            "IP",
+            "TTL",
+            "Record ID",
+            "Type"
+        ]
+    )
+    data = json.loads(content)
+    for row in data["records"]:
+        t.add_row([
+        row["create_date"],
+        row["name"],
+        row["content"],
+        row["ttl"],
+        row["record_id"],
+        row["type"]
+        ])
+    print t
 
 def listDomains():
-	out = {}
-	token = _authenticate()
-	nameListDnsRecords = base+"/api/domain/list/"
-	r, content = h.request(nameListDnsRecords, 'GET', headers={
-		'Content-type': 'application/json',
-		'Api-Session-Token':  token
-		}
-	)
-	t = prettytable.PrettyTable(["Domain"])
-	data = json.loads(content)
-	for mkey,sd in data["domains"].iteritems():
-		t.add_row([mkey])
-	print t
+    out = {}
+    token = _authenticate()
+    nameListDnsRecords = base+"/api/domain/list/"
+    r, content = h.request(nameListDnsRecords, 'GET', headers={
+        'Content-type': 'application/json',
+        'Api-Session-Token':  token
+        }
+    )
+    t = prettytable.PrettyTable(["Domain"])
+    data = json.loads(content)
+    for mkey,sd in data["domains"].iteritems():
+        t.add_row([mkey])
+    print t
 
-def createRecord(hostname, domain, ip, recType):
-	token = _authenticate()
-	url = base+"/api/dns/create/"+domain
-	newRecordParams = {}
-	newRecordParams["hostname"] = hostname
-	newRecordParams["type"] = recType
-	newRecordParams["content"] = ip
-	newRecordParams["ttl"] = 300
-	newRecordParams["priority"] = 10
-	r, content = h.request(
-		url, 'POST', json.JSONEncoder().encode(newRecordParams),
-		headers={'Content-type': 'application/json',
-		'Api-Session-Token':  token
-		}
-	)
-	data = json.loads(content)
-	t = prettytable.PrettyTable(["Result"])
-	t.add_row([data["result"]["message"]])
-	print t
+def createRecord(hostnameInput, domainInput, ipInput, recTypeInput):
+    hostname = _validateInput(hostnameInput)
+    domain = _validateInput(domainInput)
+    ip = _validateInput(domainInput)
+    recType = _validateInput(recTypeInput)
+    token = _authenticate()
+    url = base+"/api/dns/create/"+domain
+    newRecordParams = {}
+    newRecordParams["hostname"] = hostname
+    newRecordParams["type"] = recType
+    newRecordParams["content"] = ip
+    newRecordParams["ttl"] = 300
+    newRecordParams["priority"] = 10
+    r, content = h.request(
+        url, 'POST', json.JSONEncoder().encode(newRecordParams),
+        headers={'Content-type': 'application/json',
+        'Api-Session-Token':  token
+        }
+    )
+    data = json.loads(content)
+    t = prettytable.PrettyTable(["Result"])
+    t.add_row([data["result"]["message"]])
+    print t
 
-def deleteRecord(domain, recId):
-	token = _authenticate()
-	url = base+"/api/dns/delete/"+domain
-	delRecordParams = {}
-	delRecordParams["record_id"] = recId
-	r, content = h.request(
-		url, 'POST', json.JSONEncoder().encode(delRecordParams),
-		headers={'Content-Type': 'application/json',
-		'Api-Session-Token': token
-		}
-	)
-	data = json.loads(content)
-	t = prettytable.PrettyTable(["Result"])
-	t.add_row([data["result"]["message"]])
-	print t
-	
+def deleteRecord(domainInput, recIdInput):
+    domain = _validateInput(domainInput)
+    recId = _validateInput(recIdInput)
+    token = _authenticate()
+    url = base+"/api/dns/delete/"+domain
+    delRecordParams = {}
+    delRecordParams["record_id"] = recId
+    r, content = h.request(
+        url, 'POST', json.JSONEncoder().encode(delRecordParams),
+        headers={'Content-Type': 'application/json',
+        'Api-Session-Token': token
+        }
+    )
+    data = json.loads(content)
+    t = prettytable.PrettyTable(["Result"])
+    t.add_row([data["result"]["message"]])
+    print t
+    
 
 def main():
-	try:
-		opts,args = getopt(
-			argv[1:], "h",
-			[
-				"help",
-				"list-domains", 
-				"list-records=",
-				"create-record=",
-				"delete-record="
-			]
-		)
+    try:
+        opts,args = getopt(
+            argv[1:], "h",
+            [
+                "help",
+                "list-domains", 
+                "list-records=",
+                "create-record=",
+                "delete-record="
+            ]
+        )
 
-	except GetoptError as err:
-		print str(err)
-		usage()
+    except GetoptError as err:
+        print str(err)
+        usage()
 
-	for opt, arg in opts:
-		if opt in ("-h","--help"):
-			usage()
-		elif opt in ("--list-domains"):
-			listDomains()
-		elif opt in ("--list-records"):
-			listRecords(arg)
-		elif opt in ("--create-record"):
-			hostname, domain, ip, recType = arg.split(',')
-			createRecord(hostname, domain, ip, recType)
-		elif opt in ("--delete-record"):
-			domain,recId = arg.split(',')
-			deleteRecord(domain, recId)
-		else:
-			usage()
+    for opt, arg in opts:
+        if opt in ("-h","--help"):
+            usage()
+        elif opt in ("--list-domains"):
+            listDomains()
+        elif opt in ("--list-records"):
+            listRecords(arg)
+        elif opt in ("--create-record"):
+            hostname, domain, ip, recType = arg.split(',')
+            createRecord(hostname, domain, ip, recType)
+        elif opt in ("--delete-record"):
+            domain,recId = arg.split(',')
+            deleteRecord(domain, recId)
+        else:
+            usage()
 
 
 if __name__ == "__main__":
-	main()
+    main()
