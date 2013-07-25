@@ -132,7 +132,7 @@ def listDomains():
 def createRecord(hostnameInput, domainInput, ipInput, recTypeInput):
     hostname = _validateInput(hostnameInput)
     domain = _validateInput(domainInput)
-    ip = _validateInput(domainInput)
+    ip = _validateInput(ipInput)
     recType = _validateInput(recTypeInput)
     token = _authenticate()
     url = base+"/api/dns/create/"+domain
