@@ -22,7 +22,6 @@ except:
     
 base = "https://api.name.com"
 token = ""
-h = httplib2.Http()
 allowedChars = set(string.ascii_letters + string.digits + '-' + '.')
 config = ConfigParser.RawConfigParser()
 config.readfp(open(conffile))
