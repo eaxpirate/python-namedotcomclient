@@ -6,12 +6,12 @@
 
 import json
 import prettytable
-import httplib2
 import os
 from getopt import getopt,GetoptError
 from sys import argv,exit
 import ConfigParser
 import string
+import requests
 
 try:
     conffile = os.environ['HOME'] + "/.namedotcom.conf"
@@ -24,6 +24,15 @@ base = "https://api.name.com"
 token = ""
 h = httplib2.Http()
 allowedChars = set(string.ascii_letters + string.digits + '-' + '.')
+config = ConfigParser.RawConfigParser()
+config.readfp(open(conffile))
+
+apiUsername = config.get("namedotcomconfig","username")
+apiToken = config.get("namedotcomconfig","api_token")
+
+headers = {}
+headers['Api-Username'] = apiUsername
+headers['Api-Token'] = apiToken
 
 
 def usage():
@@ -48,39 +57,12 @@ def _validateInput(str):
     else:
         return(str)
 
-def _authenticate():
-    config = ConfigParser.RawConfigParser()
-    config.readfp(open(conffile))
-    apiUsername = config.get("namedotcomconfig","username")
-    apiToken = config.get("namedotcomconfig","api_token")
-    apiAuthURL = config.get("namedotcomconfig", "api_auth_url")
-
-    authJson = {}
-    authJson["username"] = apiUsername
-    authJson["api_token"] = apiToken
-
-    r, content = h.request(
-        apiAuthURL, 'POST', json.JSONEncoder().encode(authJson),
-        headers={'Content-type': 'application/json'})
-    if r['status'] == "200":
-        result = json.loads(content)
-        if result["result"]["code"] == 100:
-            token = result["session_token"]
-        return token
-    else:
-        print "Could not authenticate. Check your RC"
-        exit(1)
 
 def listRecords(input):
     domainName = _validateInput(input)
-    token = _authenticate()
     nameListDnsRecords = base+"/api/dns/list/"+domainName
-    r, content = h.request(nameListDnsRecords, 'GET', headers={
-            'Content-type': 'application/json', 
-            'Api-Session-Token':  token
-            }
-    )
-    if r['status'] == "200":
+    r = requests.get(nameListDnsRecords, headers=headers)
+    if r.status_code == 200:
         t = prettytable.PrettyTable(
             [
                 "Created",
@@ -91,7 +73,7 @@ def listRecords(input):
                 "Type"
             ]
         )
-        data = json.loads(content)
+        data = r.json()
         for row in data["records"]:
             t.add_row([
             row["create_date"],
@@ -110,16 +92,11 @@ def listRecords(input):
 
 def listDomains():
     out = {}
-    token = _authenticate()
     nameListDnsRecords = base+"/api/domain/list/"
-    r, content = h.request(nameListDnsRecords, 'GET', headers={
-        'Content-type': 'application/json',
-        'Api-Session-Token':  token
-        }
-    )
-    if r['status'] == "200":
+    r = requests.get(nameListDnsRecords, headers=headers)
+    if r.status_code == 200:
         t = prettytable.PrettyTable(["Domain"])
-        data = json.loads(content)
+        data = r.json()
         for mkey,sd in data["domains"].iteritems():
             t.add_row([mkey])
         print t
@@ -134,7 +111,6 @@ def createRecord(hostnameInput, domainInput, ipInput, recTypeInput):
     domain = _validateInput(domainInput)
     ip = _validateInput(ipInput)
     recType = _validateInput(recTypeInput)
-    token = _authenticate()
     url = base+"/api/dns/create/"+domain
     newRecordParams = {}
     newRecordParams["hostname"] = hostname
@@ -142,14 +118,12 @@ def createRecord(hostnameInput, domainInput, ipInput, recTypeInput):
     newRecordParams["content"] = ip
     newRecordParams["ttl"] = 300
     newRecordParams["priority"] = 10
-    r, content = h.request(
-        url, 'POST', json.JSONEncoder().encode(newRecordParams),
-        headers={'Content-type': 'application/json',
-        'Api-Session-Token':  token
-        }
+    r = requests.post(
+        url, data=json.dumps(newRecordParams),
+        headers=headers
     )
-    if r['status'] == "200":
-        data = json.loads(content)
+    if r.status_code == 200:
+        data = r.json()
         t = prettytable.PrettyTable(["Result"])
         t.add_row([data["result"]["message"]])
         print t
@@ -162,18 +136,15 @@ def createRecord(hostnameInput, domainInput, ipInput, recTypeInput):
 def deleteRecord(domainInput, recIdInput):
     domain = _validateInput(domainInput)
     recId = _validateInput(recIdInput)
-    token = _authenticate()
     url = base+"/api/dns/delete/"+domain
     delRecordParams = {}
     delRecordParams["record_id"] = recId
-    r, content = h.request(
-        url, 'POST', json.JSONEncoder().encode(delRecordParams),
-        headers={'Content-Type': 'application/json',
-        'Api-Session-Token': token
-        }
+    r = requests.post(
+        url, data=json.dumps(delRecordParams),
+        headers=headers
     )
-    if r['status'] == "200":
-        data = json.loads(content)
+    if r.status_code == 200:
+        data = r.json()
         t = prettytable.PrettyTable(["Result"])
         t.add_row([data["result"]["message"]])
         print t
