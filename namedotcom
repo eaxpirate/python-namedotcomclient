@@ -50,13 +50,13 @@ class Namedotcom():
         self.headers['Api-Token'] = apiToken
 
 
-def _validateInput(str):
-    if set(str) - allowedChars:
-        print """Invalid characters detected.
-        only 0-9,a-zA-Z, '\' and '-' are allowed."""
-        exit(1)
-    else:
-        return(str)
+    def validateInput(instr):
+        if set(str) - allowedChars:
+            print """Invalid characters detected.
+            only 0-9,a-zA-Z, '\' and '-' are allowed."""
+            exit(1)
+        else:
+            return(str)
 
 
 def listRecords(input):
