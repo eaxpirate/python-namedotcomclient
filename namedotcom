@@ -4,14 +4,15 @@
 # This is useful if you host your DNS with them.
 #
 
-import json
-import prettytable
-import os
-from getopt import getopt,GetoptError
 from sys import argv,exit
-import ConfigParser
+from getopt import getopt,GetoptError
+
+import os
+import json
 import string
 import requests
+import prettytable
+import ConfigParser
 
 try:
     conffile = os.environ['HOME'] + "/.namedotcom.conf"
