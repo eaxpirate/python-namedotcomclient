@@ -31,7 +31,6 @@ try:
 except:
     print "WARN: Unable to read or find ~/.namecomrc configuration file"
     print "WARN: Attempting to write one"
-    open(conffile, w)
 
 class Namedotcom():
 
