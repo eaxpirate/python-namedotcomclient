@@ -25,30 +25,31 @@ Usage: ./namedotcom <command>
     --delete-record <domain>,<record id>        - Delete a record"""
     exit(1)
 
+
 try:
     conffile = os.environ['HOME'] + "/.namedotcom.conf"
 except:
     print "WARN: Unable to read or find ~/.namecomrc configuration file"
     print "WARN: Attempting to write one"
     open(conffile, w)
+
+class Namedotcom():
+
+    def __init__():
     
-base = "https://api.name.com"
-token = ""
-allowedChars = set(string.ascii_letters + string.digits + '-' + '.' + ':')
-config = ConfigParser.RawConfigParser()
-config.readfp(open(conffile))
+        self.base = "https://api.name.com"
+        self.token = ""
+        self.allowedChars = set(string.ascii_letters + string.digits + '-' + '.' + ':')
+        self.config = ConfigParser.RawConfigParser()
+        self.config.readfp(open(conffile,'rb'))
+        
+        self.apiUsername = config.get("namedotcomconfig","username")
+        self.apiToken = config.get("namedotcomconfig","api_token")
+        
+        self.headers = {}
+        self.headers['Api-Username'] = apiUsername
+        self.headers['Api-Token'] = apiToken
 
-apiUsername = config.get("namedotcomconfig","username")
-apiToken = config.get("namedotcomconfig","api_token")
-
-headers = {}
-headers['Api-Username'] = apiUsername
-headers['Api-Token'] = apiToken
-
-
-
-if len(argv) <= 1:
-    usage()
 
 def _validateInput(str):
     if set(str) - allowedChars:
@@ -155,6 +156,10 @@ def deleteRecord(domainInput, recIdInput):
         exit(1)
 
 def main():
+
+    if len(argv) <= 1:
+        usage()
+
     try:
         opts,args = getopt(
             argv[1:], "h",
