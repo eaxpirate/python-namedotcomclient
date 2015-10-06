@@ -14,6 +14,17 @@ import requests
 import prettytable
 import ConfigParser
 
+def usage():
+    print """
+\033[33mName.com DNS Manager\033[0m\n
+Usage: ./namedotcom <command>
+<command> - can be any one of the following:
+    --list-domains                              - list all of your domains
+    --list-records <domain>                     - list all records in domain
+    --create-record <name>,<domain>,<ip>,<type> - create subdomain for domain
+    --delete-record <domain>,<record id>        - Delete a record"""
+    exit(1)
+
 try:
     conffile = os.environ['HOME'] + "/.namedotcom.conf"
 except:
@@ -35,16 +46,6 @@ headers['Api-Username'] = apiUsername
 headers['Api-Token'] = apiToken
 
 
-def usage():
-    print """
-\033[33mName.com DNS Manager\033[0m\n
-Usage: ./namedotcom <command>\n
-<command> - can be any one of the following:
-\t--list-domains                              - list all of your domains
-\t--list-records <domain>                     - list all records in domain
-\t--create-record <name>,<domain>,<ip>,<type> - create subdomain for domain
-\t--delete-record <domain>,<record id>        - Delete a record\n\n"""
-    exit(1)
 
 if len(argv) <= 1:
     usage()
