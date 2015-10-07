@@ -27,15 +27,6 @@ there is a requirements.txt; I recommend using a virtualenv:
 TODO
 ====
 
-  * Critical: fix getopt/configparser - config file is authoritative but we want
-    options
-  * setuptools
-  * Create an actual library
-  * Error handling and input sanitization
-  * replace getopt
-  * Determine the timeout for the session keys and decide on whether or not to -
-    cache
-  * Add a ''quiet'' flag for scripting
   * Add some filtering
 
 Installation
