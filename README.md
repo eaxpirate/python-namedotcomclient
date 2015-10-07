@@ -20,6 +20,7 @@ Requirements
 
 there is a requirements.txt; I recommend using a virtualenv:
 
+    git clone https://github.com/eaxpirate/python-namedotcomclient.git
     cd python-namedotcomclient
     virtualenv .
     source bin/activate
