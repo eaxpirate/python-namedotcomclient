@@ -11,12 +11,19 @@ alone client for anyone wishing to manage their name.com hosted zones via CLI.
 Requirements
 ============
 
-Python >= 2.6 (havent tested it on other stuff, but it would probably work)
-json
-prettytable
-httplib2
-getopt
-ConfigParser
+    Python />= 2.6 (havent tested it on other stuff, but it would probably work)
+    json
+    prettytable
+    httplib2
+    getopt
+    ConfigParser
+
+there is a requirements.txt; I recommend using a virtualenv:
+
+    cd python-namedotcomclient
+    virtualenv .
+    source bin/activate
+    pip install -r requirements.txt
 
 TODO
 ====
@@ -37,7 +44,7 @@ Installation
 
 Right now there is just a script and a config file - the config file should be:
 
-    ** ~/.namedotcom.conf**
+    vim ~/.namedotcom.conf**
 
 and contain the following:
 
