@@ -34,7 +34,7 @@ Installation
 
 Right now there is just a script and a config file - the config file should be:
 
-    vim ~/.namedotcom.conf**
+    vim ~/.namedotcom.conf
 
 and contain the following:
 
