@@ -107,7 +107,7 @@ class Namedotcom():
 
         assert self._validate_input(domain), \
             "\n\n\nfatal: invalid domain name input '{}'\n\n".format(domain)
-        domain_name = self._validate_input(domain)
+        domain_name = domain
 
         api_url = self.base + "/api/dns/list/" + domain_name
         try:
@@ -154,7 +154,7 @@ class Namedotcom():
         table = prettytable.PrettyTable([
             "\033[33mDomain\033[0m", 
             "\033[33mCreated\033[0m", 
-            "\033[33mExpire Date\033[0m"
+            "\033[33mExpire Date (YYYY/MM/DD)\033[0m"
         ])
         for domain_name, domain_info in domain_json["domains"].iteritems():
             table.add_row([
@@ -165,35 +165,42 @@ class Namedotcom():
         print(table)
 
 # ----------------------------------------------------------------------------
+
+    def create_record(  self, hostname_input, domain_input, ip_input, 
+                        rec_type_input):
+
+        domain_name = self._validate_input(domain_input)
+        hostname = self._validate_input(hostname_input)
+        domain   = self._validate_input(domain_input)
+        ip       = self._validate_input(ip_input)
+        rec_type = self._validate_input(rec_type_input)
+
+        if False in ( domain_name, hostname, domain, ip, rec_type ):
+            usage()
+
+        url = self.base + "/api/dns/create/" + domain_name
+
+        new_record_params = {}
+        new_record_params["hostname"] = hostname
+        new_record_params["type"]     = rec_type
+        new_record_params["content"]  = ip
+        new_record_params["ttl"]      = 300
+        new_record_params["priority"] = 10
+
+        response = requests.post(
+            url, data=json.dumps(new_record_params),
+            headers=self.headers
+        )
+
+        if response.status_code == 200:
+            data = response.json()
+            table = prettytable.PrettyTable(["Result"])
+            table.add_row([data["result"]["message"]])
+            print(table)
+        else:
+            exit(1)
+
 # ----------------------------------------------------------------------------
-
-        
-
-# def createRecord(hostnameInput, domainInput, ipInput, recTypeInput):
-#     hostname = _validateInput(hostnameInput)
-#     domain = _validateInput(domainInput)
-#     ip = _validateInput(ipInput)
-#     recType = _validateInput(recTypeInput)
-#     url = base+"/api/dns/create/"+domain
-#     newRecordParams = {}
-#     newRecordParams["hostname"] = hostname
-#     newRecordParams["type"] = recType
-#     newRecordParams["content"] = ip
-#     newRecordParams["ttl"] = 300
-#     newRecordParams["priority"] = 10
-#     r = requests.post(
-#         url, data=json.dumps(newRecordParams),
-#         headers=headers
-#     )
-#     if r.status_code == 200:
-#         data = r.json()
-#         t = prettytable.PrettyTable(["Result"])
-#         t.add_row([data["result"]["message"]])
-#         print t
-#     else:
-#         print "The remote API did not return status 200 after your POST."
-#         print "name.com may be experiencing an outage"
-#         exit(1)
 #         
 # 
 # def deleteRecord(domainInput, recIdInput):
@@ -253,10 +260,8 @@ def main():
         elif opt in ("--list-records"):
             api_handler.print_records(arg)
         elif opt in ("--create-record"):
-            print("Not implemented")
-            exit(1)
-            # hostname, domain, ip, recType = arg.split(',')
-            # createRecord(hostname, domain, ip, recType)
+            hostname, domain, ip, rec_type = arg.split(',')
+            api_handler.create_record(hostname, domain, ip, rec_type)
         elif opt in ("--delete-record"):
             print("Not implemented")
             exit(1)
