@@ -26,11 +26,6 @@ Usage: ./namedotcom <command>
     exit(1)
 
 
-# try:
-#     conffile = os.environ['HOME'] + "/.namedotcom.conf"
-# except:
-#     print "WARN: Unable to read or find ~/.namecomrc configuration file"
-
 class Namedotcom():
 
     def __init__(self):
