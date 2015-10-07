@@ -26,171 +26,201 @@ Usage: ./namedotcom <command>
     exit(1)
 
 
-try:
-    conffile = os.environ['HOME'] + "/.namedotcom.conf"
-except:
-    print "WARN: Unable to read or find ~/.namecomrc configuration file"
-    print "WARN: Attempting to write one"
+# try:
+#     conffile = os.environ['HOME'] + "/.namedotcom.conf"
+# except:
+#     print "WARN: Unable to read or find ~/.namecomrc configuration file"
 
 class Namedotcom():
 
-    def __init__():
+    def __init__(self):
     
         self.base = "https://api.name.com"
         self.token = ""
-        self.allowedChars = set(string.ascii_letters + string.digits + '-' + '.' + ':')
+        self.conffile = os.environ['HOME'] + "/.namedotcom.conf"
+            
+        self.allowedChars = set(string.ascii_letters + 
+                                string.digits        + 
+                                '-' + '.' + ':')
+
         self.config = ConfigParser.RawConfigParser()
-        self.config.readfp(open(conffile,'rb'))
+
+        try:
+            self.config.readfp(open(self.conffile,'rb'))
+        except IOError as e:
+            print("fatal: no configuration file found!\n({})".format(e))
+            exit(1)
         
-        self.apiUsername = config.get("namedotcomconfig","username")
-        self.apiToken = config.get("namedotcomconfig","api_token")
+        self.apiUsername = self.config.get("namedotcomconfig","username")
+        self.apiToken    = self.config.get("namedotcomconfig","api_token")
         
         self.headers = {}
-        self.headers['Api-Username'] = apiUsername
-        self.headers['Api-Token'] = apiToken
+        self.headers['Api-Username'] = self.apiUsername
+        self.headers['Api-Token']    = self.apiToken
 
 
-    def validateInput(instr):
-        if set(str) - allowedChars:
-            print """Invalid characters detected.
-            only 0-9,a-zA-Z, '\' and '-' are allowed."""
+    def _validateInput(instr):
+        if set(instr) - allowedChars:
+            print "only 0-9, a-zA-Z, '.' ':' and '-' are allowed"
+            return(False)
+        else:
+            return(instr)
+
+    def listRecords(input):
+        domainName = _validateInput(input)
+        nameListDnsRecords = base+"/api/dns/list/"+domainName
+        r = requests.get(nameListDnsRecords, headers=headers)
+        if r.status_code == 200:
+            t = prettytable.PrettyTable(
+                [
+                    "Created",
+                    "Name",
+                    "IP",
+                    "TTL",
+                    "Record ID",
+                    "Type"
+                ]
+            )
+            data = r.json()
+            for row in data["records"]:
+                t.add_row([
+                row["create_date"],
+                row["name"],
+                row["content"],
+                row["ttl"],
+                row["record_id"],
+                row["type"]
+                ])
+            print t
+        else:
+            print "The remote API did not return status 200."
+            print "name.com may be experiencing an outage"
+            print "or there is a problem with your domain name"
+            return(False)
+
+    def _list_domains(self):
+        """ returns a dict of domains """
+        out = {}
+        api_url = self.base + "/api/domain/list"
+
+        try:
+            result = requests.get(api_url, headers=self.headers)
+        except Exception as e:
+            print("fatal: API call failed: {}".format(e))
             exit(1)
+
+        if result.status_code == 200:
+            return result.json()
         else:
-            return(str)
+            print("fatal: the name.com api returned: {}".format(result))
+            exit(1)
+        
 
-
-def listRecords(input):
-    domainName = _validateInput(input)
-    nameListDnsRecords = base+"/api/dns/list/"+domainName
-    r = requests.get(nameListDnsRecords, headers=headers)
-    if r.status_code == 200:
-        t = prettytable.PrettyTable(
-            [
-                "Created",
-                "Name",
-                "IP",
-                "TTL",
-                "Record ID",
-                "Type"
-            ]
-        )
-        data = r.json()
-        for row in data["records"]:
-            t.add_row([
-            row["create_date"],
-            row["name"],
-            row["content"],
-            row["ttl"],
-            row["record_id"],
-            row["type"]
+    def print_domains(self):
+        """ prettyprints the domain list """
+    
+        domain_json = self._list_domains() 
+        table = prettytable.PrettyTable([
+            "\033[33mDomain\033[0m", 
+            "\033[33mCreated\033[0m", 
+            "\033[33mExpire Date\033[0m"
+        ])
+        for domain_name, domain_info in domain_json["domains"].iteritems():
+            table.add_row([
+                    domain_name, 
+                    domain_info["create_date"], 
+                    domain_info["expire_date"]
             ])
-        print t
-    else:
-        print "The remote API did not return status 200."
-        print "name.com may be experiencing an outage"
-        print "or there is a problem with your domain name"
-        exit(1)
+        print(table)
 
-def listDomains():
-    out = {}
-    nameListDnsRecords = base+"/api/domain/list/"
-    r = requests.get(nameListDnsRecords, headers=headers)
-    if r.status_code == 200:
-        t = prettytable.PrettyTable(["Domain"])
-        data = r.json()
-        for mkey,sd in data["domains"].iteritems():
-            t.add_row([mkey])
-        print t
-    else:
-        print "The remote API did not return status 200."
-        print "name.com may be experiencing an outage"
-        exit(1)
+a = Namedotcom()
+a.print_domains()
         
 
-def createRecord(hostnameInput, domainInput, ipInput, recTypeInput):
-    hostname = _validateInput(hostnameInput)
-    domain = _validateInput(domainInput)
-    ip = _validateInput(ipInput)
-    recType = _validateInput(recTypeInput)
-    url = base+"/api/dns/create/"+domain
-    newRecordParams = {}
-    newRecordParams["hostname"] = hostname
-    newRecordParams["type"] = recType
-    newRecordParams["content"] = ip
-    newRecordParams["ttl"] = 300
-    newRecordParams["priority"] = 10
-    r = requests.post(
-        url, data=json.dumps(newRecordParams),
-        headers=headers
-    )
-    if r.status_code == 200:
-        data = r.json()
-        t = prettytable.PrettyTable(["Result"])
-        t.add_row([data["result"]["message"]])
-        print t
-    else:
-        print "The remote API did not return status 200 after your POST."
-        print "name.com may be experiencing an outage"
-        exit(1)
-        
-
-def deleteRecord(domainInput, recIdInput):
-    domain = _validateInput(domainInput)
-    recId = _validateInput(recIdInput)
-    url = base+"/api/dns/delete/"+domain
-    delRecordParams = {}
-    delRecordParams["record_id"] = recId
-    r = requests.post(
-        url, data=json.dumps(delRecordParams),
-        headers=headers
-    )
-    if r.status_code == 200:
-        data = r.json()
-        t = prettytable.PrettyTable(["Result"])
-        t.add_row([data["result"]["message"]])
-        print t
-    else:
-        print "The remote API did not return status 200 after your POST."
-        print "name.com may be experiencing an outage"
-        exit(1)
-
-def main():
-
-    if len(argv) <= 1:
-        usage()
-
-    try:
-        opts,args = getopt(
-            argv[1:], "h",
-            [
-                "help",
-                "list-domains", 
-                "list-records=",
-                "create-record=",
-                "delete-record="
-            ]
-        )
-
-    except GetoptError as err:
-        print str(err)
-        usage()
-
-    for opt, arg in opts:
-        if opt in ("-h","--help"):
-            usage()
-        elif opt in ("--list-domains"):
-            listDomains()
-        elif opt in ("--list-records"):
-            listRecords(arg)
-        elif opt in ("--create-record"):
-            hostname, domain, ip, recType = arg.split(',')
-            createRecord(hostname, domain, ip, recType)
-        elif opt in ("--delete-record"):
-            domain,recId = arg.split(',')
-            deleteRecord(domain, recId)
-        else:
-            usage()
-
-
-if __name__ == "__main__":
-    main()
+# def createRecord(hostnameInput, domainInput, ipInput, recTypeInput):
+#     hostname = _validateInput(hostnameInput)
+#     domain = _validateInput(domainInput)
+#     ip = _validateInput(ipInput)
+#     recType = _validateInput(recTypeInput)
+#     url = base+"/api/dns/create/"+domain
+#     newRecordParams = {}
+#     newRecordParams["hostname"] = hostname
+#     newRecordParams["type"] = recType
+#     newRecordParams["content"] = ip
+#     newRecordParams["ttl"] = 300
+#     newRecordParams["priority"] = 10
+#     r = requests.post(
+#         url, data=json.dumps(newRecordParams),
+#         headers=headers
+#     )
+#     if r.status_code == 200:
+#         data = r.json()
+#         t = prettytable.PrettyTable(["Result"])
+#         t.add_row([data["result"]["message"]])
+#         print t
+#     else:
+#         print "The remote API did not return status 200 after your POST."
+#         print "name.com may be experiencing an outage"
+#         exit(1)
+#         
+# 
+# def deleteRecord(domainInput, recIdInput):
+#     domain = _validateInput(domainInput)
+#     recId = _validateInput(recIdInput)
+#     url = base+"/api/dns/delete/"+domain
+#     delRecordParams = {}
+#     delRecordParams["record_id"] = recId
+#     r = requests.post(
+#         url, data=json.dumps(delRecordParams),
+#         headers=headers
+#     )
+#     if r.status_code == 200:
+#         data = r.json()
+#         t = prettytable.PrettyTable(["Result"])
+#         t.add_row([data["result"]["message"]])
+#         print t
+#     else:
+#         print "The remote API did not return status 200 after your POST."
+#         print "name.com may be experiencing an outage"
+#         exit(1)
+# 
+# def main():
+# 
+#     if len(argv) <= 1:
+#         usage()
+# 
+#     try:
+#         opts,args = getopt(
+#             argv[1:], "h",
+#             [
+#                 "help",
+#                 "list-domains", 
+#                 "list-records=",
+#                 "create-record=",
+#                 "delete-record="
+#             ]
+#         )
+# 
+#     except GetoptError as err:
+#         print str(err)
+#         usage()
+# 
+#     for opt, arg in opts:
+#         if opt in ("-h","--help"):
+#             usage()
+#         elif opt in ("--list-domains"):
+#             listDomains()
+#         elif opt in ("--list-records"):
+#             listRecords(arg)
+#         elif opt in ("--create-record"):
+#             hostname, domain, ip, recType = arg.split(',')
+#             createRecord(hostname, domain, ip, recType)
+#         elif opt in ("--delete-record"):
+#             domain,recId = arg.split(',')
+#             deleteRecord(domain, recId)
+#         else:
+#             usage()
+# 
+# 
+# if __name__ == "__main__":
+#     main()
