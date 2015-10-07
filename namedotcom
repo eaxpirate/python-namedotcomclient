@@ -1,8 +1,11 @@
 #!/usr/bin/env python
+
 # 
-# A simple interface to Name.com's DNS API
-# This is useful if you host your DNS with them.
-#
+# A Name.com API molester
+# 
+
+# For managing DNS records hosted with name.com
+# 
 
 from sys import argv,exit
 from getopt import getopt,GetoptError
@@ -54,25 +57,21 @@ class Namedotcom():
             print("fatal: no configuration file found!\n({})".format(e))
             exit(1)
         
-        try:
-            self.api_username = self.config.get("namedotcomconfig","username")
-        except ConfigParser.NoOptionError as e:
-            print("username not extracted properly")
-            print("check your ~/.namedotcom.conf")
-            print(e)
-            exit(1)
-
-        try:
-            self.api_token = self.config.get("namedotcomconfig","api_token")
-        except ConfigParser.NoOptionError as e:
-            print("api_token not extracted properly")
-            print("check your ~/.namedotcom.conf")
-            print(e)
-            exit(1)
+        self.api_username = self._getconf("username")
+        self.api_token = self._getconf("api_token")
         
         self.headers = {}
         self.headers['Api-Username'] = self.api_username
         self.headers['Api-Token']    = self.api_token
+
+# ----------------------------------------------------------------------------
+
+    def _getconf(self, variable):
+        try:
+            return self.config.get("namedotcomconfig",variable)
+        except ConfigParser.NoOptionError as e:
+            print("Error parsing config file: {}".format(e))
+            exit(1)
 
 # ----------------------------------------------------------------------------
 
