@@ -1,12 +1,10 @@
 Name.com Command Line Client
 ============================
 
-This script is under active development. Use at your own risk.
-
-This is an extremely basic client written for the name.com api to allow me some
-automatic DNS configuration of my cloudservers built at rackspace. This script
-is part of my deploy process, however, it is also relatively useful as a stand-
-alone client for anyone wishing to manage their name.com hosted zones via CLI.
+This is an extremely basic client written for the name.com api; it has the
+ability to add and remove basic DNS records ( I have only explored A and AAAA
+records because those are my needs ) and was written with automated deployments
+in mind.
 
 Requirements
 ============
